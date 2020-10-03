@@ -1,16 +1,13 @@
 <template>
   <v-app>
-    <v-navigation-drawer
-      v-model="drawer"
-      app
-    >
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </v-navigation-drawer>
-
-    <v-app-bar app>
-      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-
+    <v-app-bar app> 
+      <v-img
+        class="ma-3"
+        max-height=30
+        max-width=30
+        src=./assets/logo.png
+        contain
+      ></v-img>
       <v-toolbar-title>Flsfy</v-toolbar-title>
     </v-app-bar>
 
@@ -38,5 +35,6 @@ export default {
   .main {
     background-image: url('./assets/lowpoly.png');
     background-attachment: scroll;
+    background-size: 100% 100%;
   }
 </style>
