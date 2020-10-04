@@ -11,4 +11,4 @@ Speak your mind, preach your worldview.
 - Firebase Firestore, Functions, Hosting
 
 ### Made during IvyHacks2020
-Visit [ivyhacks-backend.web.app](ivyhacks-backend.web.app), or [philtalks.space](philtalks.space).
+Visit [ivyhacks-backend.web.app](https://ivyhacks-backend.web.app), or [philtalks.space](https://philtalks.space).
