@@ -45,7 +45,7 @@ export default {
     background-image: url('./assets/background_mixed.png');
     background-size: 100% 100%;
   }
-  .404Page {
+  .fourOhFour {
     background-image: url('./assets/background_blue.png');
     background-size: 100% 100%;
   }

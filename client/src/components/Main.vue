@@ -1,19 +1,19 @@
 <template>
   <div class='main d-flex align-center'>
     <v-container class='d-flex justify-center'>
-      <v-btn
-        elevation="4"
-        class=""
-        x-large
-      >
-        <router-link to="/room" class='text-bold text-decoration-none'>
+      <router-link to="/room" class='text-bold text-decoration-none d-block'>
+        <v-btn
+          elevation="4"
+          class=""
+          x-large
+          color="secondary"
+        >
           Join Random Room
-        </router-link>
-      </v-btn>
+        </v-btn>
+      </router-link>
     </v-container>
     <v-container class='welcome my-2'>
       <h1 class="text-h2 mt-4">Welcome!</h1>
-
 
       <p class="text-subtitle-2 mt-4">Discuss philosophical questions with others on the internet!</p>
     </v-container>
