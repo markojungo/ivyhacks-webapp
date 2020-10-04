@@ -4,7 +4,8 @@
       class="loadingContainer"
     >
       <div class="">
-        <h2 class="text-h2">Trying to join room: {{ this.roomKey }}</h2>
+        <!--<h2 class="text-h2">Joining room {{ this.roomKey }}</h2>-->
+        <h2 class="text-h2">Joining room...</h2>
         <div class="d-flex justify-center mt-5">
           <v-progress-circular
             :size="150"
@@ -59,21 +60,23 @@
       </v-col>
       <v-col col=8>
         <v-row class="ma-3">
-          <v-card class="w100 pa-5">
+          <v-card class="w100 pa-5" color="rgb(255, 255, 255, 0.7)">
             <h2 class="text-h2">{{ currentQuestion }}</h2>
           </v-card>
         </v-row>
         <v-row class="ma-3">
-          <v-card class="w100" id="chat">
-            <v-list dense class="">
+          <v-card class="w100" id="chat" color="rgb(255, 255, 255, 0.7)">
+            <v-list dense color="rgb(255, 255, 255, 0.7)">
               <v-list-item
+                class="tile"
+                color="rgb(255, 255, 255, 0.7)"
                 v-for="t in chatTexts" :key="t"
               >
                 {{ t.name }}: {{ t.text }}
               </v-list-item>
             </v-list>  
           </v-card>
-          <v-card class="w100 mt-5">
+          <v-card class="w100 mt-5" color="rgb(255, 255, 255, 0.9)">
             <v-form
               ref="form"
               class="pa-5"
@@ -148,15 +151,26 @@
       },
       
       leaveRoom: async function () {
+
+        // Get room info
         let roomRef = db.collection('rooms').doc(this.roomKey);
         let room = await roomRef.get();
-        const participants = await room.data().participants;
 
+        // Take user off participants list
+        const participants = await room.data().participants;
         const index = participants.indexOf(this.id);
         participants.splice(index, 1);
         await roomRef.update({
           participants: participants
         });
+
+        // Update nextCounter
+        if (this.nextButtonDisabled && this.nextCounter>0) {
+          this.nextCounter--;
+          await roomRef.update({
+            nextCounter: this.nextCounter
+          });
+        }
 
         this.chatToSend = 'has left the room';
         await this.sendChat();
@@ -274,6 +288,13 @@
 
   .w100 {
     width: 100%;
+  }
+
+  .tile {
+    background: rgba(255, 255, 255, .5)
+  }
+  .tile:hover {
+    background: rgba(0, 0, 0, .1)
   }
 
   #chat {
