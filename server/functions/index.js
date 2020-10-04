@@ -28,7 +28,7 @@ function generateQuestions(questions) {
 function generatePhilosophers(philosophers) {
   let texts = [];
   philosophers.forEach(doc => {
-    texts.push(doc.data().text);
+    texts.push(doc.get('text'));
   });
   shuffle(texts);
   return texts;
