@@ -1,5 +1,5 @@
 <template>
-  <div class='room mx-3'>
+  <div class='room'>
     <div v-bind:class='{ hide: isLoaded }'
       class="loadingContainer"
     >
@@ -42,6 +42,7 @@
           color="secondary"
           class="mt-5"
           v-on:click="nextQuestion()"
+          :disabled="nextButtonDisabled"
         >
           Next Question ({{ nextCounter }}/{{ totalNextNeeded }})
         </v-btn>
@@ -115,7 +116,8 @@
       id: null, // Current User's id
       chatTexts: [],
       chatToSend: '',
-      nextCounter: 0
+      nextCounter: 0,
+      nextButtonDisabled: false
     }),
 
     computed: {
@@ -129,9 +131,20 @@
 
     methods: {
       nextQuestion: async function () {
-        const query = '?key=' + this.roomKey;
-        const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/requestNext';
-        await axios.post(url + query);
+        let room = db.collection('rooms').doc(this.roomKey);
+
+        const roomData = await room.get();
+
+        let newKey = roomData.get('nextCounter') + 1;
+        let numPeople = roomData.get('participants').length;
+        // let numQuestions = roomData.get('questions').length;
+        // let newQuestionIndex = (roomData.get('currentQuestionIndex') + 1) % numQuestions;
+        this.nextButtonDisabled = true;
+        // Adjust next counter
+        await room.update({
+          nextCounter: (newKey > numPeople / 2) ? 0 : newKey,
+          // currentQuestionIndex: newQuestionIndex
+        });
       },
       
       leaveRoom: async function () {
@@ -208,6 +221,12 @@
       doc.onSnapshot(docSnapshot => {
         this.participants = docSnapshot.get('participants');
         this.chatTexts = docSnapshot.get('chatTexts');
+
+        this.$nextTick(function () {
+          var chat = document.getElementById('chat');
+          chat.scrollTop = chat.scrollHeight;
+        });
+        
         // Skip question if majority requests
         let newCounter = docSnapshot.get('nextCounter');
         if (newCounter < this.nextCounter) {
@@ -216,6 +235,8 @@
           // set this.currentQuestion
           this.currentQuestionIndex = (this.currentQuestionIndex + 1) % this.questions.length;
           this.currentQuestion = this.questions[this.currentQuestionIndex];
+
+          this.nextButtonDisabled = false;
         } else if (newCounter > this.nextCounter) {
           this.nextCounter = newCounter;
         }
