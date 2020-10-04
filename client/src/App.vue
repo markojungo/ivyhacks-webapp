@@ -34,8 +34,15 @@ export default {
 
 <style scoped>
   .main {
-    background-image: url('./assets/lowpoly.png');
-    background-attachment: scroll;
+    background-image: url('./assets/background_red.png');
+    background-size: 100% 100%;
+  }
+  .room {
+    background-image: url('./assets/background_mixed.png');
+    background-size: 100% 100%;
+  }
+  .404Page {
+    background-image: url('./assets/background_blue.png');
     background-size: 100% 100%;
   }
 </style>

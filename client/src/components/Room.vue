@@ -16,7 +16,7 @@
       </div>
     </div>
     
-    <v-row v-bind:class="{ hide: !isLoaded }">
+    <v-row v-bind:class="{ hide: !isLoaded }" class="px-5">
       <v-col cols="4">
         <v-card class="participants">
             <v-card-title>Participants</v-card-title>
@@ -59,9 +59,33 @@
       <v-col cols="8">
         <v-row class="ma-3">
           <v-card class="pa-4">
-            <h6 class="text-h6"></h6>
             <h2 class="text-h2">{{ currentQuestion }}</h2>
           </v-card>
+        </v-row>
+        <v-row class="ma-3" id="chat">
+          <v-card class="w100">
+            <v-list class="">
+              <v-list-item v-for="t in chatTexts" :key="t">
+                {{ t.name }}: {{ t.text }}
+              </v-list-item>
+            </v-list>  
+            <v-form
+              ref="form"
+              class="pa-5"
+              v-on:submit.prevent
+            >
+              <v-text-field
+                v-model="chatToSend"
+                label="Chat..."
+              ></v-text-field>
+              <v-btn
+                color="success"
+                :disabled="!valid"
+                @click="sendChat()"
+              >Send</v-btn>
+            </v-form>
+          </v-card>
+
         </v-row>
       </v-col>
     </v-row>
@@ -86,11 +110,17 @@
       philosophers: [],
       name: '',// Current User's name
       id: null, // Current User's id
+      chatTexts: [],
+      chatToSend: '',
+      nextCounter: 0
     }),
 
     computed: {
       totalNextNeeded: function () {
         return Math.floor(this.participants.length / 2) + 1;
+      },
+      valid: function () {
+        return this.chatToSend != '';
       }
     },
 
@@ -105,13 +135,34 @@
         const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/participantLeave';
         
         this.$router.push({name: 'Main'});
+
+        this.chatTexts.push({ name: this.name, text: "has left the room" });
+
         await axios.post(url + query);
+      },
+      sendChat: async function () {
+        const roomRef = db.collection('rooms').doc(this.roomKey);
+        const room = await roomRef.get();
+        
+        console.log(room.data());
+
+        let newChatTexts = room.data().chatTexts;
+        newChatTexts.push({
+          name: this.name,
+          text: this.chatToSend
+        });
+
+        this.chatToSend = '';
+
+        await roomRef.update({
+          chatTexts: newChatTexts
+        });
       }
     },
 
     async mounted () {
       const roomInfo = await axios.get('https://us-central1-ivyhacks-backend.cloudfunctions.net/addParticipant');
-      console.log(roomInfo.data);
+      
       const { 
         id,
         participants,
@@ -119,7 +170,8 @@
         questions,
         philosophers,
         currentQuestionIndex,
-        nextCounter
+        nextCounter,
+        chatTexts
       } = roomInfo.data;
 
       // Set Initial Data
@@ -133,6 +185,7 @@
       this.currentQuestionIndex = currentQuestionIndex;
       this.currentQuestion = this.questions[this.currentQuestionIndex];
       this.nextCounter = nextCounter;
+      this.chatTexts = chatTexts;
 
       const path = this.$route.path.slice(-1) == '/' ? 
         this.$route.path : this.$route.path + '/';
@@ -141,6 +194,7 @@
       const doc = await db.collection('rooms').doc(this.roomKey);
       doc.onSnapshot(docSnapshot => {
         this.participants = docSnapshot.get('participants');
+        this.chatTexts = docSnapshot.get('chatTexts');
         // Skip question if majority requests
         let newCounter = docSnapshot.get('nextCounter');
         if (newCounter < this.nextCounter) {
@@ -166,6 +220,7 @@
 
   .room {
     height: 100%;
+    width: 100%;
   }
 
   .loadingContainer {
@@ -178,5 +233,9 @@
 
   .active {
     color:brown;
+  }
+
+  .w100 {
+    width: 100%;
   }
 </style>
