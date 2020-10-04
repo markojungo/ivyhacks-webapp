@@ -15,10 +15,8 @@ function shuffle(array) {
 }
 
 // Generates a shuffled list of questions for a room
-function generateQuestions() {
-  let texts = []
-  const db = admin.firestore();
-  let questions = await db.collection("questions").get();
+function generateQuestions(questions) {
+  let texts = [];
   questions.forEach(doc => {
     texts.push(doc.data().text);
   });
@@ -27,12 +25,10 @@ function generateQuestions() {
 }
 
 // Generates a shuffled list of philosophers for a room
-function generatePhilosophers() {
-  let texts = []
-  const db = admin.firestore();
-  let philosophers = await db.collection("philosophers").get();
+function generatePhilosophers(philosophers) {
+  let texts = [];
   philosophers.forEach(doc => {
-    texts.push(doc.data().text);
+    texts.push(doc.get('text'));
   });
   shuffle(texts);
   return texts;
@@ -40,10 +36,11 @@ function generatePhilosophers() {
 
 // Get next available participant ID
 // Starts at largest ID, then linear search for next available
-function nextAvailableID(participants) {
+function nextAvailableID(participants, totalPhilos) {
+  if (participants.length === 0) return 0;
   maxID = Math.max(...participants);
   for (var i = maxID+1; i < maxID+1+ROOM_SIZE; i++) {
-    if (!participants.includes(i)) {
+    if (!participants.includes(i%totalPhilos)) {
       return i;
     }
   }
@@ -55,47 +52,60 @@ function nextAvailableID(participants) {
 exports.addParticipant = functions.https.onRequest((_, res) => {
   cors(_, res, async () => {
     const db = admin.firestore();
-
-    let rooms = await db.collection('rooms').get();
-
+    let rooms = db.collection('rooms');
+    let roomsQuery = await rooms.get();
+    
     // Assign participant existing room, if available
     let id = 0;
-    let returnkey = null;
-    let questions = generateQuestions();
-    let philosophers = generatePhilosophers();
+    let participants = null;
+    let returnKey = null;
+    let questions = generateQuestions(await db.collection("questions").get());
+    let philosophers = generatePhilosophers(await db.collection("philosophers").get());
     let nextCounter = 0;
-    rooms.forEach(doc => {
-      if (doc.data().participants.length !== ROOM_SIZE) { 
-        id = nextAvailableID(doc.data().participants);
-        doc.data().participants.push(id);
-        returnkey = doc.id;
-        questions = doc.data().questions;
-        philosophers = doc.data().philosophers;
-        nextCounter = doc.data().nextCounter;
+    let currentQuestionIndex = 0;
+    
+    roomsQuery.forEach(doc => {
+      if (!returnKey && doc.get('participants').length !== ROOM_SIZE) { 
+        id = nextAvailableID(doc.get('participants'), philosophers.length);
+        newParticipants = doc.get('participants');
+        newParticipants.push(id);
+        participants = newParticipants;
+        returnKey = doc.id;
+        questions = doc.get('questions');
+        philosophers = doc.get('philosophers');
+        nextCounter = doc.get('nextCounter');
+        currentQuestionIndex = doc.get('currentQuestionIndex');
       }
     });
-
+    
     // Create a new room if no existing room is found
-    if (!returnkey) {
-      returnkey = randomGenerator(12);
+    if (returnKey) {
+      await rooms.doc(returnKey).update({
+        participants: participants
+      });
+    } else {
+      returnKey = randomGenerator(12);
+      participants = [id]
       let newroom = {
-        participants: [id],
+        participants: participants,
         questions: questions,
         philosophers: philosophers,
         nextCounter: nextCounter,
+        currentQuestionIndex: currentQuestionIndex,
       }
     
-      await db.collection('rooms').doc(returnKey).add(newroom);
+      await db.collection('rooms').doc(returnKey).set(newroom);
     }
     
     // Return relevant info
     res.status(200).json({
       id: id,
       participants: participants,
-      key: returnkey,
+      key: returnKey,
       questions: questions,
       philosophers: philosophers,
       nextCounter: nextCounter,
+      currentQuestionIndex: currentQuestionIndex,
     });
   })
 });
@@ -110,28 +120,21 @@ exports.participantLeave = functions.https.onRequest((_, res) => {
 // Participant presses next question button
 exports.requestNext = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
+
+    // Get room info
     const roomKey = req.query.key;
-    
-    let room = await db.collection('rooms').doc(roomkey);
+    let room = await db.collection('rooms').doc(roomKey);
+    let newKey = room.get('nextCounter') + 1;
+    let numPeople = room.get('participants').length;
+    let numQuestions = room.get('questions').length;
+    let newQuestionIndex = (room.get('currentQuestionIndex') + 1) % numQuestions;
+
+    // Adjust next counter
     await room.update({
-      nextCounter: room.data().nextCounter + 1
+      nextCounter: (newKey > numPeople / 2) ? 0 : newKey,
+      currentQuestionIndex: newQuestionIndex
     });
+    
     res.status(200).end();
   })
-});
-
-// Emit signal on event of new user joining/leaving and nextCounter++ so that other participants now
-// Could be 3 functions or 2
-exports.emitNextQuestion = functions.firestore.document('rooms/{roomKey}').onUpdate((change, context) => {
-  //
-  const current = change.after.data();
-
-  if (current.nextCounter > current.participants.length / 2) {
-    // Emit 
-  } /*
-  else if () {
-
-  } else if () {
-
-  }*/
 });
