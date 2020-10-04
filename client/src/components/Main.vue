@@ -12,10 +12,10 @@
       </v-btn>
     </v-container>
     <v-container class='welcome my-2'>
-      <h1 class="text-h2 mt-4">Welcome!</h1>
-
-
-      <p class="text-subtitle-2 mt-4">Discuss philosophical questions with others on the internet!</p>
+      <h1 class="text-h2 mt-6">Welcome!</h1>
+      <div>
+      <p class="text-subtitle-1 mt-4">Discuss philosophical questions with others on the internet!</p>
+      </div>
     </v-container>
   </div>
 </template>
@@ -36,6 +36,6 @@
   }
 
   .welcome {
-    background-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.29);
   }
 </style>
