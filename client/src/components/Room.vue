@@ -18,11 +18,11 @@
     
     <v-row v-bind:class="{ hide: !isLoaded }" class="px-5">
       <v-col cols="4">
-        <v-card class="participants">
-            <v-card-title>Participants</v-card-title>
-          <v-list
-            disabled
-          >
+        <v-card class="participants"
+          style="background: none !important"
+        >
+          <v-card-title>Participants</v-card-title>
+          <v-list style="background: none !important">
             <v-container
               v-for="p in participants" :key="p"
             >
@@ -56,27 +56,31 @@
           Leave Room
         </v-btn>
       </v-col>
-      <v-col cols="8">
+      <v-col col=8>
         <v-row class="ma-3">
-          <v-card class="pa-4">
+          <v-card class="w100 pa-5">
             <h2 class="text-h2">{{ currentQuestion }}</h2>
           </v-card>
         </v-row>
-        <v-row class="ma-3" id="chat">
-          <v-card class="w100">
-            <v-list class="">
-              <v-list-item v-for="t in chatTexts" :key="t">
+        <v-row class="ma-3">
+          <v-card class="w100" id="chat">
+            <v-list dense class="">
+              <v-list-item
+                v-for="t in chatTexts" :key="t"
+              >
                 {{ t.name }}: {{ t.text }}
               </v-list-item>
             </v-list>  
+          </v-card>
+          <v-card class="w100 mt-5">
             <v-form
               ref="form"
               class="pa-5"
-              v-on:submit.prevent
-            >
+              @submit.prevent="sendChat()"
+                label="Chat..."
+              >
               <v-text-field
                 v-model="chatToSend"
-                label="Chat..."
               ></v-text-field>
               <v-btn
                 color="success"
@@ -85,7 +89,6 @@
               >Send</v-btn>
             </v-form>
           </v-card>
-
         </v-row>
       </v-col>
     </v-row>
@@ -130,21 +133,26 @@
         const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/requestNext';
         await axios.post(url + query);
       },
+      
       leaveRoom: async function () {
-        const query = '?pid=' + this.id + '&roomKey=' + this.roomKey;
-        const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/participantLeave';
-        
+        let roomRef = db.collection('rooms').doc(this.roomKey);
+        let room = await roomRef.get();
+        const participants = await room.data().participants;
+
+        const index = participants.indexOf(this.id);
+        participants.splice(index, 1);
+        await roomRef.update({
+          participants: participants
+        });
+
+        this.chatToSend = 'has left the room';
+        await this.sendChat();
+
         this.$router.push({name: 'Main'});
-
-        this.chatTexts.push({ name: this.name, text: "has left the room" });
-
-        await axios.post(url + query);
       },
       sendChat: async function () {
         const roomRef = db.collection('rooms').doc(this.roomKey);
         const room = await roomRef.get();
-        
-        console.log(room.data());
 
         let newChatTexts = room.data().chatTexts;
         newChatTexts.push({
@@ -156,6 +164,11 @@
 
         await roomRef.update({
           chatTexts: newChatTexts
+        });
+
+        this.$nextTick(function () {
+          var chat = document.getElementById('chat');
+          chat.scrollTop = chat.scrollHeight;
         });
       }
     },
@@ -209,6 +222,9 @@
       }, err => {
         console.log(`Encountered error: ${err}`);
       });
+
+      this.chatToSend = "HAS ARRIVED."
+      this.sendChat();
     },
   }
 </script>
@@ -237,5 +253,10 @@
 
   .w100 {
     width: 100%;
+  }
+
+  #chat {
+    height: 300px;
+    overflow-y: scroll;
   }
 </style>

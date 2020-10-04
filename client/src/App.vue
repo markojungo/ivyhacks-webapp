@@ -1,6 +1,8 @@
 <template>
   <v-app>
-    <v-app-bar app> 
+    <v-app-bar app
+      src=./assets/lowpoly.png
+    > 
       <v-img
         class="ma-3"
         max-height=75
@@ -9,7 +11,9 @@
         src=./assets/logo.svg
         contain
       ></v-img>
-      <v-toolbar-title>PhilTalk</v-toolbar-title>
+      <v-toolbar-title>
+        <h3 class="">PhilTalk</h3>
+      </v-toolbar-title>
     </v-app-bar>
 
     <v-main class='main'>

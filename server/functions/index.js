@@ -63,6 +63,7 @@ exports.addParticipant = functions.https.onRequest((_, res) => {
     let philosophers = generatePhilosophers(await db.collection("philosophers").get());
     let nextCounter = 0;
     let currentQuestionIndex = 0;
+    let chatTexts = [];
     
     roomsQuery.forEach(doc => {
       if (!returnKey && doc.get('participants').length !== ROOM_SIZE) { 
@@ -75,6 +76,7 @@ exports.addParticipant = functions.https.onRequest((_, res) => {
         philosophers = doc.get('philosophers');
         nextCounter = doc.get('nextCounter');
         currentQuestionIndex = doc.get('currentQuestionIndex');
+        chatTexts = doc.get('chatTexts');
       }
     });
     
@@ -92,6 +94,7 @@ exports.addParticipant = functions.https.onRequest((_, res) => {
         philosophers: philosophers,
         nextCounter: nextCounter,
         currentQuestionIndex: currentQuestionIndex,
+        chatTexts: chatTexts
       }
     
       await db.collection('rooms').doc(returnKey).set(newroom);
@@ -106,35 +109,61 @@ exports.addParticipant = functions.https.onRequest((_, res) => {
       philosophers: philosophers,
       nextCounter: nextCounter,
       currentQuestionIndex: currentQuestionIndex,
+      chatTexts: chatTexts
     });
-  })
-});
-
-// Participant leaves
-exports.participantLeave = functions.https.onRequest((_, res) => {
-  cors(_, res, async () => {
-
   })
 });
 
 // Participant presses next question button
 exports.requestNext = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
-
     // Get room info
     const roomKey = req.query.key;
-    let room = await db.collection('rooms').doc(roomKey);
-    let newKey = room.get('nextCounter') + 1;
-    let numPeople = room.get('participants').length;
-    let numQuestions = room.get('questions').length;
-    let newQuestionIndex = (room.get('currentQuestionIndex') + 1) % numQuestions;
+    const db = admin.firestore();
+    console.log(roomKey);
+    let room = db.collection('rooms').doc(roomKey);
+
+    const roomData = await room.get();
+
+    let newKey = roomData.get('nextCounter') + 1;
+    let numPeople = roomData.get('participants').length;
+    // let numQuestions = roomData.get('questions').length;
+    // let newQuestionIndex = (roomData.get('currentQuestionIndex') + 1) % numQuestions;
 
     // Adjust next counter
-    await room.update({
+    const success = await room.update({
       nextCounter: (newKey > numPeople / 2) ? 0 : newKey,
-      currentQuestionIndex: newQuestionIndex
+      // currentQuestionIndex: newQuestionIndex
     });
     
-    res.status(200).end();
+    if (success) {
+      res.status(200).json('Success!');
+    } else {
+      res.status(400).end();
+    }
+  })
+});
+
+// Participant leaves
+exports.participantLeave = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    const db = admin.firestore();
+    
+    const pid = req.query.pid; 
+    const roomKey = req.query.roomKey;
+
+    let roomRef = db.collection('rooms').doc(roomKey);
+    let room = await roomRef.get();
+    const participants = await room.data().participants;
+
+    const index = participants.indexOf(pid);
+    if (index > -1) {
+      participants.splice(index, 1);
+      await room.update({
+        participants: participants
+      });
+    }
+
+    res.send(200).json('Success!');
   })
 });
