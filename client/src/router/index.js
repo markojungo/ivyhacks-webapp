@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Main from '../components/Main.vue'
+import fourOhFour from '../components/404Page.vue'
 
 Vue.use(VueRouter)
 
@@ -11,17 +12,14 @@ const routes = [
     component: Main
   },
   {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../components/About.vue')
-  },
-  {
     path: '/room',
     name: 'Room',
-    component: () => import(/* webpackChunkName: "about" */ '../components/Room.vue')
+    component: () => import(/* webpackChunkName: "room" */ '../components/Room.vue')
+  },
+  {
+    path: '*',
+    name: '404',
+    component: fourOhFour
   }
 ]
 

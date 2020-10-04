@@ -11,7 +11,7 @@
       <v-toolbar-title>Flsfy</v-toolbar-title>
     </v-app-bar>
 
-    <v-main class='main align-center'>
+    <v-main class='main'>
       <router-view />
     </v-main>
   </v-app>
