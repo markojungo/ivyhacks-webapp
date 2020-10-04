@@ -11,8 +11,9 @@
         </router-link>
       </v-btn>
     </v-container>
-    <v-container class='welcome my-2 rounded-lg'>
-      <h1 class="text-h2 mt-4">Welcome to Flsfy</h1>
+    <v-container class='welcome my-2'>
+      <h1 class="text-h2 mt-4">Welcome!</h1>
+
 
       <p class="text-subtitle-2 mt-4">Discuss philosophical questions with others on the internet!</p>
     </v-container>

@@ -3,12 +3,13 @@
     <v-app-bar app> 
       <v-img
         class="ma-3"
-        max-height=30
-        max-width=30
-        src=./assets/logo.png
+        max-height=75
+        max-width=75
+        rotate=90
+        src=./assets/logo.svg
         contain
       ></v-img>
-      <v-toolbar-title>Flsfy</v-toolbar-title>
+      <v-toolbar-title>PhilTalk</v-toolbar-title>
     </v-app-bar>
 
     <v-main class='main'>

@@ -42,7 +42,19 @@
           color="secondary"
           class="mt-5"
           v-on:click="nextQuestion()"
-        >Next Question ({{ nextCounter }}/{{ totalNextNeeded }})</v-btn>
+        >
+          Next Question ({{ nextCounter }}/{{ totalNextNeeded }})
+        </v-btn>
+        <v-btn 
+          @click="leaveRoom()"
+          elevation="2"
+          rounded
+          block
+          color="error"
+          class="mt-5"
+        >
+          Leave Room
+        </v-btn>
       </v-col>
       <v-col cols="8">
         <v-row class="ma-3">
@@ -78,7 +90,7 @@
 
     computed: {
       totalNextNeeded: function () {
-        return this.participants.length / 2 + 1;
+        return Math.floor(this.participants.length / 2) + 1;
       }
     },
 
@@ -88,12 +100,12 @@
         const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/requestNext';
         await axios.post(url + query);
       },
-      leaveButtonPressed: async function () {
+      leaveRoom: async function () {
         const query = '?pid=' + this.id + '&roomKey=' + this.roomKey;
         const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/participantLeave';
-        await axios.post(url + query);
-
         
+        this.$router.push({name: 'Main'});
+        await axios.post(url + query);
       }
     },
 
