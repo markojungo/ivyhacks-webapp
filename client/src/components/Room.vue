@@ -42,10 +42,15 @@
           color="secondary"
           class="mt-5"
           v-on:click="nextQuestion()"
-        >Next Question</v-btn>
+        >Next Question ({{ nextCounter }}/{{ totalNextNeeded }})</v-btn>
       </v-col>
       <v-col cols="8">
-        
+        <v-row class="ma-3">
+          <v-card class="pa-4">
+            <h6 class="text-h6"></h6>
+            <h2 class="text-h2">{{ currentQuestion }}</h2>
+          </v-card>
+        </v-row>
       </v-col>
     </v-row>
   </div>
@@ -71,13 +76,24 @@
       id: null, // Current User's id
     }),
 
+    computed: {
+      totalNextNeeded: function () {
+        return this.participants.length / 2 + 1;
+      }
+    },
+
     methods: {
       nextQuestion: async function () {
         const query = '?key=' + this.roomKey;
         const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/requestNext';
-        await axios.get(url + query);
+        await axios.post(url + query);
+      },
+      leaveButtonPressed: async function () {
+        const query = '?pid=' + this.id + '&roomKey=' + this.roomKey;
+        const url = 'https://us-central1-ivyhacks-backend.cloudfunctions.net/participantLeave';
+        await axios.post(url + query);
 
-        console.log('Button Clicked!');
+        
       }
     },
 
@@ -90,7 +106,8 @@
         key,
         questions,
         philosophers,
-        currentQuestionIndex
+        currentQuestionIndex,
+        nextCounter
       } = roomInfo.data;
 
       // Set Initial Data
@@ -103,6 +120,7 @@
       this.philosophers = philosophers;
       this.currentQuestionIndex = currentQuestionIndex;
       this.currentQuestion = this.questions[this.currentQuestionIndex];
+      this.nextCounter = nextCounter;
 
       const path = this.$route.path.slice(-1) == '/' ? 
         this.$route.path : this.$route.path + '/';
@@ -117,7 +135,7 @@
           // reset this.nextCounter and doc.nextCounter
           this.nextCounter = 0;
           // set this.currentQuestion
-          this.currentQuestionIndex = (this.currentQuestionIndex + 1) % questions.length;
+          this.currentQuestionIndex = (this.currentQuestionIndex + 1) % this.questions.length;
           this.currentQuestion = this.questions[this.currentQuestionIndex];
         } else if (newCounter > this.nextCounter) {
           this.nextCounter = newCounter;
